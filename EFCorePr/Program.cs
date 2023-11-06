@@ -1,4 +1,7 @@
-using EFCorePr.DatabaseContext;
+//using EFCorePr.DatabaseContext;
+using EFCorePr.Controllers.Filter;
+using EFCorePr.Models;
+using EFCorePr.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,7 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-builder.Services.AddDbContext<BookContext>(x => x.UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString")));
+builder.Services.AddDbContext<BookStoreEFCoreContext>(x =>
+x.UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString")));
+
+builder.Services.AddScoped<IGenerateGuideToRoutsService, GenerateGuideToRoutsService>();
+
+builder.Services.AddSingleton<ExceptionHandler>();
 
 var app = builder.Build();
 

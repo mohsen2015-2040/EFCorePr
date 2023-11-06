@@ -13,7 +13,7 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "launchUrl": "MyLibrary/GetBooks",
+      "launchUrl": "MyLibrary",
       "applicationUrl": "http://localhost:5113",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -23,7 +23,7 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "launchUrl": "MyLibrary/GetBooks",
+      "launchUrl": "MyLibrary",
       "applicationUrl": "https://localhost:7172;http://localhost:5113",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -32,7 +32,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "MyLibrary/GetBooks",
+      "launchUrl": "MyLibrary",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

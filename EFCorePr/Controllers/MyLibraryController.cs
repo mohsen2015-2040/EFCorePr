@@ -1,5 +1,6 @@
-using EFCorePr.DatabaseContext;
-using EFCorePr.Model;
+
+using EFCorePr.Models;
+using EFCorePr.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EFCorePr.Controllers
@@ -10,70 +11,24 @@ namespace EFCorePr.Controllers
     {
 
         private readonly ILogger<MyLibraryController> _logger;
-        private readonly BookContext _bookContext;
+        private readonly BookStoreEFCoreContext _bookContext;
+        private readonly IGenerateGuideToRoutsService _generateGuide;
 
-        public MyLibraryController(ILogger<MyLibraryController> logger, BookContext bookContext)
+        public MyLibraryController(ILogger<MyLibraryController> logger, BookStoreEFCoreContext bookContext, 
+            IGenerateGuideToRoutsService generateGuide)
         {
             _logger = logger;
             _bookContext = bookContext;
+            _generateGuide = generateGuide;
         }
 
-        //Create:
-        [HttpGet]
-        [Route("AddBook")]
-        public IActionResult AddBook()
+
+        public IActionResult Index()
         {
-            _bookContext.Add(new Model.Book("Learn English", "Toturial", "Mohsen Bazazan"));
-            _bookContext.SaveChanges();
-           
+            var guideMessage = _generateGuide.GenerateMessage(this.GetType());
             
-            return Ok("Successfully added.");
+            return Ok(guideMessage);
         }
 
-        //Update:
-        [HttpGet]
-        [Route("EditBook")]
-        public IActionResult UpdateBook()
-        {
-            var selectedBook = _bookContext.Books.FirstOrDefault(b => b.Id == 5);
-
-            if(selectedBook != null)
-            {
-                selectedBook.Author = "JJ M (edited)";
-                selectedBook.Title = "Historical (edited)";
-                
-                _bookContext.SaveChanges();
-                return Ok("Successfully updated.");
-            }else
-                return Ok("Book not found!");
-        }
-
-        //Delete:
-        [HttpGet]
-        [Route("DeleteBook")]
-        public IActionResult DeleteBook()
-        {
-            var selectedBook = _bookContext.Books.FirstOrDefault(b => b.Id == 2);
-
-            if(selectedBook != null && !selectedBook.IsDeleted)
-            {
-                selectedBook.IsDeleted = true;
-                _bookContext.SaveChanges();
-
-                return Ok("Successfully deleted.");
-            }else
-                return Ok("Book not found!");
-
-        }
-
-        //Read:
-        [HttpGet]
-        [Route("GetBooks")]
-        public IActionResult GetBook() 
-        {
-            var books = _bookContext.Books.Where(x => !x.IsDeleted);
-
-            return Ok(books);
-        }
     }
 }
