@@ -15,5 +15,9 @@ public partial class Customer
 
     public string PhoneNum { get; set; }
 
+    public bool IsDeleted { get; set; }
+
     public virtual ICollection<Rent> Rent { get; set; } = new List<Rent>();
+
+    public Customer() { IsDeleted = false; }
 }

@@ -25,9 +25,9 @@ public partial class Books
 
     public virtual ICollection<Rent> Rent { get; set; } = new List<Rent>();
 
-    public Books()
-    {
+    public Books() 
+    { 
         IsAvailable = true;
-        IsDeleted = false;
+        IsDeleted = false; 
     }
 }

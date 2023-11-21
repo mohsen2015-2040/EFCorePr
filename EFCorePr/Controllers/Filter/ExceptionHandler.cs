@@ -3,29 +3,30 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace EFCorePr.Controllers.Filter
 {
-    public class ExceptionHandler : IActionFilter
+    public class ExceptionHandler : IExceptionFilter
     {
         private readonly ILogger _logger;
+        private readonly IHostEnvironment _enviroment;
 
-        public ExceptionHandler(ILogger<ExceptionHandler> logger)
+        public ExceptionHandler(IHostEnvironment environment, ILogger<ExceptionHandler> logger)
         {
             _logger = logger;
+            _enviroment = environment;
         }
 
-        public void OnActionExecuted(ActionExecutedContext context)
-        {
-            if(context.Exception != null) 
-            {
-                var ex = context.Exception;
-               
-                _logger.LogError(ex.Message);
-
-                context.Result = new ObjectResult(ex.Message);
-
-                context.ExceptionHandled = true;
-            }
-        }
 
         public void OnActionExecuting(ActionExecutingContext context) { }
+
+        public void OnException(ExceptionContext context)
+        {
+            if (!_enviroment.IsDevelopment()) { return; }
+
+            context.Result = new ContentResult
+            {
+                Content = context.Exception.InnerException.Message
+            };
+
+            _logger.LogError(context.Exception.ToString());
+        }
     }
 }

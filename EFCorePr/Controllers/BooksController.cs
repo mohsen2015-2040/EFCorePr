@@ -6,18 +6,17 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EFCorePr.Controllers
 {
+    [TypeFilter(typeof(ExceptionHandler))]
     [Route("MyLibrary/[controller]")]
     public class BooksController : Controller
     {
         private readonly BookStoreEFCoreContext _dbContext;
         private readonly IGenerateGuideToRoutsService _generateGuide;
-        private readonly ILogger<BooksController> _logger;
-
+        
         public BooksController(BookStoreEFCoreContext bookStoreContext, IGenerateGuideToRoutsService generateGuide, ILogger<BooksController> logger)
         {
             _dbContext = bookStoreContext;
             _generateGuide = generateGuide;
-            _logger = logger;
         }
 
         public ActionResult Index()
@@ -26,68 +25,80 @@ namespace EFCorePr.Controllers
             return Ok(guideMessage);
         }
 
-        [ServiceFilter(typeof(ExceptionHandler))]
-        [HttpGet]
-        [Route("GetBooks")]
+        [ServiceFilter(typeof(LogActionActivity))]
+        [HttpGet("get-all")]
         public IActionResult Get()
         {
-            var books = from b in _dbContext.Books where (!b.IsDeleted)
-                    join p in _dbContext.Publisher
-                    on b.PublisherId equals p.Id
-                    select new { b, p };
+            var books = from b in _dbContext.Books
+                             where (b.IsDeleted != true)
+                             select b;
 
-            string response = "";
-
-            foreach(var item in books)
-            {
-                response += $"[Name: {item.b.Title} * Description: {item.b.Description} * ISBN: {item.b.Isbn} * Publisher: {item.b.Publisher.FullName} ] - ";   
-            }
-            return Ok(response);
+            return Ok(books.ToArray());
         }
 
-
-        [ServiceFilter(typeof(ExceptionHandler))]
-        [Route("add")]
-        public IActionResult Add()
+        [ServiceFilter(typeof(LogActionActivity))]
+        [HttpGet("search-book")]
+        public IActionResult GetByID(int Id)
         {
+            var selectedBook = _dbContext.Books.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
 
-            _dbContext.Books.Add(new Models.Books { Title = "Shahname", Description = "Tutorial", Isbn = "1234567999", PublisherId = 6 });
-            _dbContext.SaveChanges();
+            if (selectedBook == null)
+                return NotFound("The Book not found!");
+            else
+                return Ok(selectedBook);
+        }
+
+        [ServiceFilter(typeof(LogActionActivity))]
+        [HttpPost("add")]
+        public async Task<IActionResult> Add(Books book)
+        {
+            _dbContext.Books.Add(book);
+            await _dbContext.SaveChangesAsync();
 
             return Ok("Successfully added.");
-
         }
 
-        [ServiceFilter(typeof(ExceptionHandler))]
-        [Route("Edit")]
-        public IActionResult Update()
+        [ServiceFilter(typeof(LogActionActivity))]
+        [HttpPost("edit")]
+        public async Task<IActionResult> Update(int Id, [Bind("Id", "Title", "Description", "Isbn")] Books book)
         {
-            var selecedBook = _dbContext.Books.FirstOrDefault(x => x.Id == 14);
-            if (selecedBook != null)
+            var selecedBook = _dbContext.Books.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
+
+            if (selecedBook == null)
+                return NotFound("The Book not found!");
+            else if (Id != book.Id)
+                return BadRequest("The provided Id does not match the Id in the book data.");
+
+            else if (ModelState.IsValid)
             {
-                selecedBook.Description = "Tutorial";
-                _dbContext.SaveChanges();
+                selecedBook.Title = book.Title;
+                selecedBook.Description = book.Description;
+                selecedBook.Isbn = book.Isbn;
+                //_dbContext.Update(book);
+                await _dbContext.SaveChangesAsync();
 
                 return Ok("Successfully Updated");
             }
             else
-                return Ok("Book Not Found!");
+                return Ok(book);
         }
 
-        [Route("Delete")]
-        public IActionResult Delete()
+        [ServiceFilter(typeof(LogActionActivity))]
+        [HttpPost("Delete")]
+        public IActionResult Delete(int Id)
         {
-            var selectedBook = _dbContext.Books.FirstOrDefault(x => x.Id == 13);
+            var selectedBook = _dbContext.Books.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
 
-            if (selectedBook != null)
+            if (selectedBook == null)
+                return NotFound("The Book not found!");
+            else
             {
-                _dbContext.Books.Remove(selectedBook);
+                //_dbContext.Books.Remove(selectedBook);
+                selectedBook.IsDeleted = true;
                 _dbContext.SaveChanges();
 
                 return Ok("Successfully Removed!");
-            }
-            else
-                return Ok("Book Not Found!");
+            }      
         }
     }
 }

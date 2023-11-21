@@ -87,6 +87,7 @@ public partial class BookStoreEFCoreContext : DbContext
         });
 
         OnModelCreatingPartial(modelBuilder);
+
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
