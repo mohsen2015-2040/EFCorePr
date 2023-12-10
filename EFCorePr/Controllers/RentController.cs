@@ -1,7 +1,9 @@
 ﻿using EFCorePr.Controllers.Filter;
 using EFCorePr.Models;
 using EFCorePr.Services;
+using EFCorePr.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCorePr.Controllers
 {
@@ -24,78 +26,138 @@ namespace EFCorePr.Controllers
             return Ok(guideMessage);
         }
 
+        //Actions
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpGet("Get-All")]
         public IActionResult Get()
         {
-            var rents = from r in _dbContext.Rent
-                             where (r.IsDeleted != true)
-                             select r;
+            var rents = _dbContext.Rent.Where(r => !r.IsDeleted).ToList();
 
-            return Ok(rents.ToArray());
+            List<RentViewData> rentViews = new List<RentViewData>();
+            foreach(var rent in rents)
+            {
+                rentViews.Add(new RentViewData
+                {
+                    BookTitle = rent.Book.Title,
+                    BookIsbn = rent.Book.Isbn,
+                    CustomerName = (rent.Customer.FirstName + rent.Customer.LastName),
+                    CustomerNationalCode = rent.Customer.NationalCode,
+                    StartDate = rent.StartDate,
+                    EndDate = rent.FinishDate,
+                    CustomerPhoneNum = rent.Customer.PhoneNum
+                });
+            }
+
+            return Ok(rentViews);
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
-        [HttpGet("search-rent")]
-        public IActionResult GetByID(int Id)
+        [HttpGet("search-rent/{Id}")]
+        public async Task<IActionResult> GetByID(int Id)
         {
-            var selectedRent = _dbContext.Rent.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
+            var selectedRent = await _dbContext.Rent.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
 
             if (selectedRent == null)
                 return NotFound("Item Not Found!");
-            else
-                return Ok(selectedRent);
+
+            return Ok(new RentViewData 
+            {
+                BookTitle = selectedRent.Book.Title,
+                CustomerName = (selectedRent.Customer.FirstName + selectedRent.Customer.LastName),
+                CustomerNationalCode = selectedRent.Customer.NationalCode,
+                BookIsbn = selectedRent.Book.Isbn,
+                StartDate = selectedRent.StartDate,
+                EndDate = selectedRent.FinishDate,
+                CustomerPhoneNum = selectedRent.Customer.PhoneNum
+            });
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpPost("Add")]
-        public async Task<IActionResult> Add(Rent rent)
+        public async Task<IActionResult> Add([FromForm][Bind("BookIsbn", "CustomerNationalCode", "StartDate", "EndDate")] RentViewData rentView)
         {
-            _dbContext.Rent.Add(rent);
-            await _dbContext.SaveChangesAsync();
+            var rentViewBook = await _dbContext.Book.FirstOrDefaultAsync(b => b.Isbn == rentView.BookIsbn && !b.IsDeleted);
+            var rentViewCustomer = await _dbContext.Customer.FirstOrDefaultAsync(c => c.NationalCode == rentView.CustomerNationalCode && !c.IsDeleted);
 
-            return Ok("Successfully added.");
+            if (rentViewBook == null || rentViewCustomer == null)
+                return NotFound("Invalid Input!");
 
-        }
-
-        [ServiceFilter(typeof(LogActionActivity))]
-        [HttpPost("Edit")]
-        public async Task<IActionResult> Update(int Id, [Bind("Id", "StartDate", "FinishDate")] Rent rent)
-        {
-            var selectedRent = _dbContext.Rent.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
-
-            if (selectedRent == null)
-                return NotFound("Item not found!");
-            else if (Id != rent.Id)
-                return BadRequest("The provided Id doesn't match Id in rents data!");
-            else if (ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                selectedRent.StartDate = rent.StartDate;
-                selectedRent.FinishDate = rent.FinishDate;
+                _dbContext.Rent.Add(new Rent
+                {
+                    BookId = rentViewBook.Id,
+                    CustomerId = rentViewCustomer.Id,
+                    StartDate = rentView.StartDate,
+                    FinishDate = rentView.EndDate
+                });
+                rentViewBook.IsAvailaible = false;
+
                 await _dbContext.SaveChangesAsync();
 
-                return Ok("Successfully Updated");
+                return RedirectToAction("Get");
             }
-            else
-                return Ok(rent);
+            return Ok(rentView);
+
+        }
+
+
+        [HttpGet("edit/{Id}")]
+        public async Task<IActionResult> Update(int Id)
+        {
+            var selectedRent = await _dbContext.Rent.FirstOrDefaultAsync(r => r.Id == Id && !r.IsDeleted);
+
+            if (selectedRent == null)
+                return NotFound("The Item Not Found!");
+
+            return Ok(new RentViewData 
+            { 
+                BookIsbn = selectedRent.Book.Isbn,
+                CustomerNationalCode = selectedRent.Customer.NationalCode,
+                StartDate = selectedRent.StartDate,
+                EndDate = selectedRent.FinishDate
+            });
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
-        [HttpPost("Delete")]
-        public IActionResult Delete(int Id)
+        [HttpPost("Edit/{Id}")]
+        public async Task<IActionResult> Update(int Id, [FromForm][Bind("BookIsbn", "CustomerNationalCode", "StartDate", "FinishDate")] RentViewData rentView )
         {
-            var selectedRent = _dbContext.Rent.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
+            var selectedRent = await _dbContext.Rent.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
+            var rentViewBook = await _dbContext.Book.FirstOrDefaultAsync(b => b.Isbn == rentView.BookIsbn && !b.IsDeleted);
+            var rentViewCustomer = await _dbContext.Customer.FirstOrDefaultAsync(c => c.NationalCode == rentView.CustomerNationalCode && !c.IsDeleted);
+
+            if (selectedRent == null || rentViewBook == null || rentViewCustomer == null)
+                return NotFound("Invalid Input!");
+
+            if (ModelState.IsValid)
+            {
+                selectedRent.StartDate = rentView.StartDate;
+                selectedRent.FinishDate = rentView.EndDate;
+                selectedRent.CustomerId = rentViewCustomer.Id;
+                selectedRent.BookId = rentViewBook.Id;
+
+                await _dbContext.SaveChangesAsync();
+
+                return RedirectToAction("Get");
+            }
+
+            return Ok(rentView);
+        }
+
+        [ServiceFilter(typeof(LogActionActivity))]
+        [HttpPost("Delete/{Id}")]
+        public async Task<IActionResult> Delete(int Id)
+        {
+            var selectedRent = await _dbContext.Rent.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
 
             if (selectedRent == null)
-                return NotFound("The Book not found!");
-            else
-            {
-                //_dbContext.Books.Remove(selectedBook);
-                selectedRent.IsDeleted = true;
-                _dbContext.SaveChanges();
+                return NotFound("The Item not found!");
+            
+            selectedRent.IsDeleted = true;
+            await _dbContext.SaveChangesAsync();
 
-                return Ok("Successfully Removed!");
-            }
+            return RedirectToAction("Get");
         }
     }
 }

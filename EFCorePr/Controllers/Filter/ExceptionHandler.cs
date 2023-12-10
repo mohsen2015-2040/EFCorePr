@@ -23,7 +23,7 @@ namespace EFCorePr.Controllers.Filter
 
             context.Result = new ContentResult
             {
-                Content = context.Exception.InnerException.Message
+                Content = context.Exception.Message
             };
 
             _logger.LogError(context.Exception.ToString());

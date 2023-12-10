@@ -11,9 +11,7 @@ public partial class Publisher
 
     public string FullName { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; set; } = false;
 
-    public virtual ICollection<Books> Books { get; set; } = new List<Books>();
-
-    public Publisher() { IsDeleted = false; }
+    public virtual ICollection<Book> Book { get; set; } = new List<Book>();
 }

@@ -9,7 +9,7 @@ namespace EFCorePr.Services
         {
             switch (entity)
             {
-                case Type t when t == typeof(Books):
+                case Type t when t == typeof(Book):
                     string getBooks = "~/get-all";
                     string searchBook = "~/search-book";
                     string addBook = "~/add";

@@ -17,15 +17,9 @@ public partial class Rent
 
     public DateTime FinishDate { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; set; } = false;
 
-    public virtual Books Book { get; set; }
+    public virtual Book Book { get; set; }
 
     public virtual Customer Customer { get; set; }
-
-    public Rent() 
-    { 
-        IsDeleted = false;
-        StartDate = DateTime.Now;
-    }
 }

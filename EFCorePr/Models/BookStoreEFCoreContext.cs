@@ -13,7 +13,7 @@ public partial class BookStoreEFCoreContext : DbContext
     {
     }
 
-    public virtual DbSet<Books> Books { get; set; }
+    public virtual DbSet<Book> Book { get; set; }
 
     public virtual DbSet<Customer> Customer { get; set; }
 
@@ -23,29 +23,45 @@ public partial class BookStoreEFCoreContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Books>(entity =>
+        modelBuilder.Entity<Book>(entity =>
         {
+            entity.HasKey(e => e.Id).HasName("PK__Book__3214EC272D6AF3EC");
+
+            entity.HasIndex(e => e.Isbn, "IX_Isbn_NotDeleted")
+                .IsUnique()
+                .HasFilter("([IsDeleted]=(0))");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Description)
                 .IsRequired()
-                .HasMaxLength(255);
+                .HasMaxLength(50);
             entity.Property(e => e.Isbn)
                 .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false)
-                .HasColumnName("ISBN");
+                .HasMaxLength(13)
+                .IsUnicode(false);
             entity.Property(e => e.PublisherId).HasColumnName("PublisherID");
             entity.Property(e => e.Title)
                 .IsRequired()
-                .HasMaxLength(255);
+                .HasMaxLength(50);
 
-            entity.HasOne(d => d.Publisher).WithMany(p => p.Books)
+            entity.HasOne(d => d.Publisher).WithMany(p => p.Book)
                 .HasForeignKey(d => d.PublisherId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Books_Publisher");
+                .HasConstraintName("FK_Book_Publisher");
         });
 
         modelBuilder.Entity<Customer>(entity =>
         {
+            entity.HasKey(e => e.Id).HasName("PK__Customer__3214EC27DFE2EB35");
+
+            entity.HasIndex(e => e.NationalCode, "IX_NationalCode_NotDeleted")
+                .IsUnique()
+                .HasFilter("([IsDeleted]=(0))");
+
+            entity.HasIndex(e => e.PhoneNum, "IX_PhoneNum_NotDeleted")
+                .IsUnique()
+                .HasFilter("([IsDeleted]=(0))");
+
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.FirstName)
                 .IsRequired()
@@ -53,14 +69,20 @@ public partial class BookStoreEFCoreContext : DbContext
             entity.Property(e => e.LastName)
                 .IsRequired()
                 .HasMaxLength(50);
+            entity.Property(e => e.NationalCode)
+                .IsRequired()
+                .HasMaxLength(10)
+                .IsUnicode(false);
             entity.Property(e => e.PhoneNum)
                 .IsRequired()
-                .HasMaxLength(50)
+                .HasMaxLength(11)
                 .IsUnicode(false);
         });
 
         modelBuilder.Entity<Publisher>(entity =>
         {
+            entity.HasIndex(e => e.FullName, "IX_Publisher").IsUnique();
+
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.FullName)
                 .IsRequired()
@@ -77,17 +99,14 @@ public partial class BookStoreEFCoreContext : DbContext
 
             entity.HasOne(d => d.Book).WithMany(p => p.Rent)
                 .HasForeignKey(d => d.BookId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Rent_Books");
+                .HasConstraintName("FK_Rent_Book");
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Rent)
                 .HasForeignKey(d => d.CustomerId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Rent_Customer");
         });
 
         OnModelCreatingPartial(modelBuilder);
-
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

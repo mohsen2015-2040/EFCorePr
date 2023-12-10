@@ -1,6 +1,7 @@
 ﻿using EFCorePr.Controllers.Filter;
 using EFCorePr.Models;
 using EFCorePr.Services;
+using EFCorePr.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,7 @@ namespace EFCorePr.Controllers
             _generateGuide = generateGuide;
         }
 
+        //Actions
         public ActionResult Index()
         {
             var guideMessage = _generateGuide.GenerateMessage(typeof(Publisher));
@@ -30,76 +32,92 @@ namespace EFCorePr.Controllers
         [HttpGet("Get-All")]
         public IActionResult Get()
         {
-            var publishers = from p in _dbContext.Publisher
-                             where (p.IsDeleted != true)
-                             select p;
+            var publishers = _dbContext.Publisher.Where(p => !p.IsDeleted);
 
-            return Ok(publishers.ToArray());
+            List<PublisherViewData> publisherViews = new List<PublisherViewData>();
+            foreach (var publisher in publishers)
+            {
+                publisherViews.Add(new PublisherViewData { FullName = publisher.FullName});
+            }
+
+            return Ok(publisherViews);
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
-        [HttpGet("search-publisher")]
+        [HttpGet("search-publisher/{Id}")]
         public IActionResult GetByID(int Id)
         {
-            var selectedPublisher = _dbContext.Publisher.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
+            var selectedPublisher = _dbContext.Publisher.FirstOrDefault(x => x.Id == Id && !x.IsDeleted);
 
             if (selectedPublisher == null)
                 return NotFound("The Publisher Not Found!");
-            else
-                return Ok(selectedPublisher);
+
+              
+            return Ok(new PublisherViewData { FullName = selectedPublisher.FullName});
         }
 
 
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpPost("Add")]
-        public async Task<IActionResult> Add(Publisher publisher)
+        public async Task<IActionResult> Add([FromForm] PublisherViewData publisherView)
         {
-            _dbContext.Publisher.Add(publisher);
+            await _dbContext.Publisher.AddAsync(new Publisher() { FullName = publisherView.FullName});
             await _dbContext.SaveChangesAsync();
 
-            return Ok("successfully added");
+            return RedirectToAction("Get");
         }
 
 
-        [ServiceFilter(typeof(LogActionActivity))]
-        [HttpPost("Edit")]
-        public async Task<IActionResult> Update(int Id, [Bind("Id", "FullName")] Publisher publisher)
+
+        [HttpGet("edit/{Id}")]
+        public async Task<IActionResult> Update(int Id)
         {
-            var selectedPublisher = _dbContext.Publisher.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
+            var selectedPublisher = await _dbContext.Publisher.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
+
+            if (selectedPublisher == null)
+                return NotFound("The Publisher Not Found!");
+
+            return Ok(new PublisherViewData { FullName = selectedPublisher.FullName});
+        }
+
+        [ServiceFilter(typeof(LogActionActivity))]
+        [HttpPost("Edit/{Id}")]
+        public async Task<IActionResult> Update(int Id,[FromForm] PublisherViewData publisherView)
+        {
+            var selectedPublisher = await _dbContext.Publisher.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
 
             if (selectedPublisher == null)
                 return NotFound("The Publisher not found!");
-            else if (Id != publisher.Id)
-                return BadRequest("The providede Id doesn't match the Id in publishers data!");
-            else if (ModelState.IsValid)
+            
+            if (ModelState.IsValid)
             {
-                selectedPublisher.FullName = publisher.FullName;
+                selectedPublisher.FullName = publisherView.FullName;
                 await _dbContext.SaveChangesAsync();
 
-                return Ok("Successfully Updated");
+                return RedirectToAction("Get");
             }
-            else
-                return Ok(publisher);
+         
+            return Ok(publisherView);
         }
 
 
+
         [ServiceFilter(typeof(LogActionActivity))]
-        [HttpPost("Delete")]
+        [HttpPost("Delete/{Id}")]
         public async Task<IActionResult> Delete(int Id)
         {
-            var selectedPublisher = _dbContext.Publisher.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
+            var selectedPublisher = await _dbContext.Publisher.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
 
             if (selectedPublisher == null)
                 return NotFound("The Publisher not found!");
-            else
-            {
-                //_dbContext.Publisher.Remove(selectedPublisher);
-                selectedPublisher.IsDeleted = true;
 
-                await _dbContext.SaveChangesAsync();
-
-                return Ok("Successfully Removed!");
-            }  
+            
+            selectedPublisher.IsDeleted = true;
+    
+            await _dbContext.SaveChangesAsync();
+                
+            return RedirectToAction("Get");
+              
         }
     }
 }

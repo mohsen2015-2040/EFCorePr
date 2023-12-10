@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using EFCorePr.Tools;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace EFCorePr.Controllers.Filter
 {

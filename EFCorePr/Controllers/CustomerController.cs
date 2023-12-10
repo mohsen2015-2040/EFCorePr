@@ -1,8 +1,11 @@
 ﻿using EFCorePr.Controllers.Filter;
 using EFCorePr.Models;
 using EFCorePr.Services;
+using EFCorePr.Tools;
+using EFCorePr.ViewModels;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics.Eventing.Reader;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCorePr.Controllers
 {
@@ -12,18 +15,22 @@ namespace EFCorePr.Controllers
     {
         private readonly BookStoreEFCoreContext _dbContext;
         private readonly IGenerateGuideToRoutsService _generateGuide;
-       
-        public CustomerController(BookStoreEFCoreContext dbContext, IGenerateGuideToRoutsService generateGuide, ILogger<CustomerController> logger)
+
+        public CustomerController(BookStoreEFCoreContext dbContext,
+            IGenerateGuideToRoutsService generateGuide,
+            ILogger<CustomerController> logger)
         {
             _dbContext = dbContext;
             _generateGuide = generateGuide;
         }
 
 
+        //Actions
         public ActionResult Index()
         {
             var guideMessage = _generateGuide.GenerateMessage(typeof(Customer));
-            
+
+
             return Ok(guideMessage);
         }
 
@@ -31,75 +38,124 @@ namespace EFCorePr.Controllers
         [HttpGet("get-all")]
         public IActionResult Get()
         {
-            var customers = from c in _dbContext.Customer
-                             where (c.IsDeleted != true)
-                             select c;
+            var customers = _dbContext.Customer.Where(c => !c.IsDeleted);
 
-            return Ok(customers.ToArray());
+            List<CustomerViewData> customerViews = new List<CustomerViewData>();
+            foreach (var customer in customers)
+            {
+                customerViews.Add(new CustomerViewData
+                {
+                    FirstName = customer.FirstName,
+                    LastName = customer.LastName,
+                    PhoneNum = customer.PhoneNum,
+                    NationalCode = customer.NationalCode
+                });
+            }
+
+            return Ok(customerViews);
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
-        [HttpGet("search-user")]
+        [HttpGet("search-user/{Id}")]
         public IActionResult GetByID(int Id)
         {
-            var selectedCustomer = _dbContext.Customer.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
+            var selectedCustomer = _dbContext.Customer.FirstOrDefault(x => x.Id == Id && !x.IsDeleted);
 
-            if(selectedCustomer == null)
+            if (selectedCustomer == null)
                 return NotFound("The User Not Found!");
-            else
-                return Ok(selectedCustomer);
+
+            return Ok(new CustomerViewData
+            {
+                FirstName = selectedCustomer.FirstName,
+                LastName = selectedCustomer.LastName,
+                PhoneNum = selectedCustomer.PhoneNum,
+                NationalCode = selectedCustomer.NationalCode
+            });
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpPost("Add")]
-        public async Task<IActionResult> Create(Customer customer)
+        public async Task<IActionResult> Create([FromForm] CustomerViewData customerView)
         {
-            _dbContext.Customer.Add(customer);
-            await _dbContext.SaveChangesAsync();
+            //var validateResult = _userValidator.Validate();
 
-            return Ok("Successfully added.");
+            if (ModelState.IsValid)
+            {
+                await _dbContext.Customer.AddAsync(new Customer()
+                {
+                    FirstName = customerView.FirstName,
+                    LastName = customerView.LastName,
+                    PhoneNum = customerView.PhoneNum,
+                    NationalCode = customerView.NationalCode
+                });
+
+                await _dbContext.SaveChangesAsync();
+
+                return RedirectToAction("Get");
+            }
+
+            return Ok(customerView);
+        }
+
+
+        [ServiceFilter(typeof(LogActionActivity))]
+        [HttpGet("edit/{Id}")]
+        public async Task<IActionResult> Update(int Id)
+        {
+            var selectedCustomer = await _dbContext.Customer.FirstOrDefaultAsync(c => c.Id == Id && !c.IsDeleted);
+
+            if (selectedCustomer == null)
+                return NotFound("The Customer Not Found!");
+
+            return Ok(new CustomerViewData
+            {
+                FirstName = selectedCustomer.FirstName,
+                LastName = selectedCustomer.LastName,
+                PhoneNum = selectedCustomer.PhoneNum,
+                NationalCode = selectedCustomer.NationalCode
+            });
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
-        [HttpPost("Edit")]
-        public async Task<IActionResult> Update(int Id, [Bind("Id", "FirstName", "LastName", "PhoneNum")] Customer customer)
+        [HttpPost("Edit/{Id}")]
+        public async Task<IActionResult> Update(int Id, [FromForm] CustomerViewData customerView)
         {
-            var selectedCustomer = _dbContext.Customer.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
+            var selectedCustomer = await _dbContext.Customer.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
 
             if (selectedCustomer == null)
                 return NotFound("The User not found!");
-            else if (Id != customer.Id)
-                return BadRequest("The provided Id doesn't match the Id in the users data!");
-            else if (ModelState.IsValid)
+
+            if (ModelState.IsValid)
             {
-                selectedCustomer.FirstName = customer.FirstName;
-                selectedCustomer.LastName = customer.LastName;
-                selectedCustomer.PhoneNum = customer.PhoneNum;
+                selectedCustomer.FirstName = customerView.FirstName;
+                selectedCustomer.LastName = customerView.LastName;
+                selectedCustomer.PhoneNum = customerView.PhoneNum;
+                selectedCustomer.NationalCode = customerView.NationalCode;
+
                 await _dbContext.SaveChangesAsync();
 
-                return Ok("Successfully Updated");
+                return RedirectToAction("Get");
             }
-            else
-                return Ok(customer);
-                
+            return Ok(customerView);
+
         }
 
+
+
         [ServiceFilter(typeof(LogActionActivity))]
-        [HttpPost("Delete")]
+        [HttpPost("Delete/{Id}")]
         public async Task<IActionResult> Delete(int Id)
         {
-            var customer = _dbContext.Customer.FirstOrDefault(x => x.Id == Id && x.IsDeleted != true);
+            var customer = await _dbContext.Customer.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
 
             if (customer == null)
                 return Ok("The User Not Found!");
-            else
-            {
-                // _dbContext.Customer.Remove(customer);
-                customer.IsDeleted = true;
-                await _dbContext.SaveChangesAsync();
 
-                return Ok("Successfully Removed!");
-            }
+            customer.IsDeleted = true;
+
+            await _dbContext.SaveChangesAsync();
+
+            return RedirectToAction("Get");
         }
     }
 }

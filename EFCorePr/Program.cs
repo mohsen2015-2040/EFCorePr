@@ -6,21 +6,31 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore.Storage;
 using static System.Net.Mime.MediaTypeNames;
+using FluentValidation;
+using EFCorePr.Validations;
+using FluentValidation.AspNetCore;
+using EFCorePr.ViewModels;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddDbContext<BookStoreEFCoreContext>(x =>
-x.UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString")));
+x.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString")));
 
 builder.Services.AddScoped<IGenerateGuideToRoutsService, GenerateGuideToRoutsService>();
 
 builder.Services.AddScoped<ExceptionHandler>();
 
 builder.Services.AddScoped<LogActionActivity>();
+
+builder.Services.AddScoped<IValidator<CustomerViewData>, UserValidator>();
+builder.Services.AddScoped<IValidator<BookViewData>, BookValidator>();
+builder.Services.AddScoped<IValidator<PublisherViewData>, PublisherValidator>();
+builder.Services.AddScoped<IValidator<RentViewData>, RentValidator>();
 
 var app = builder.Build();
 
@@ -45,7 +55,6 @@ if (!app.Environment.IsDevelopment())
 app.UseHsts();
 
 // Configure the HTTP request pipeline.
-
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

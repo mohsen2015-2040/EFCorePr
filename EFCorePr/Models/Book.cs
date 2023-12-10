@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace EFCorePr.Models;
 
-public partial class Books
+public partial class Book
 {
     public int Id { get; set; }
 
@@ -13,21 +13,15 @@ public partial class Books
 
     public string Title { get; set; }
 
+    public string Isbn { get; set; }
+
     public string Description { get; set; }
 
-    public bool IsAvailable { get; set; }
+    public bool IsDeleted { get; set; } = false;
 
-    public bool IsDeleted { get; set; }
-
-    public string Isbn { get; set; }
+    public bool IsAvailaible { get; set; } = true;
 
     public virtual Publisher Publisher { get; set; }
 
     public virtual ICollection<Rent> Rent { get; set; } = new List<Rent>();
-
-    public Books() 
-    { 
-        IsAvailable = true;
-        IsDeleted = false; 
-    }
 }

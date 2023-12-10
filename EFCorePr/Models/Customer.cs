@@ -13,11 +13,11 @@ public partial class Customer
 
     public string LastName { get; set; }
 
+    public string NationalCode { get; set; }
+
     public string PhoneNum { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; set; } = false;
 
     public virtual ICollection<Rent> Rent { get; set; } = new List<Rent>();
-
-    public Customer() { IsDeleted = false; }
 }
