@@ -9,7 +9,11 @@ using static System.Net.Mime.MediaTypeNames;
 using FluentValidation;
 using EFCorePr.Validations;
 using FluentValidation.AspNetCore;
-using EFCorePr.ViewModels;
+using EFCorePr.ViewModels.Book;
+using EFCorePr.ViewModels.Customer;
+using EFCorePr.ViewModels.Publisher;
+using EFCorePr.ViewModels.Rent;
+using FastEndpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +21,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddFastEndpoints();
 
 builder.Services.AddDbContext<BookStoreEFCoreContext>(x =>
 x.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString")));
@@ -51,6 +56,8 @@ if (!app.Environment.IsDevelopment())
     }
     ));
 }
+
+app.UseFastEndpoints();
 
 app.UseHsts();
 

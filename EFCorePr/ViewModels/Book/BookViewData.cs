@@ -1,6 +1,6 @@
 ﻿using EFCorePr.Models;
 
-namespace EFCorePr.ViewModels
+namespace EFCorePr.ViewModels.Book
 {
     public class BookViewData
     {
@@ -10,10 +10,10 @@ namespace EFCorePr.ViewModels
 
         public string Isbn { get; set; } = string.Empty;
 
-        public string PublisherName {  get; set; } = string.Empty;
+        public string PublisherName { get; set; } = string.Empty;
 
         public BookViewData() { }
-        public BookViewData(Book dbBook)
+        public BookViewData(Models.Book dbBook)
         {
             Title = dbBook.Title;
 

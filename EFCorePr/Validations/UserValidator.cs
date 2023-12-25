@@ -1,5 +1,4 @@
-﻿
-using EFCorePr.ViewModels;
+﻿using EFCorePr.ViewModels.Customer;
 using FluentValidation;
 
 namespace EFCorePr.Validations

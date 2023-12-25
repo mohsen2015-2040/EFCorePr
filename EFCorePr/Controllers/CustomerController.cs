@@ -2,7 +2,7 @@
 using EFCorePr.Models;
 using EFCorePr.Services;
 using EFCorePr.Tools;
-using EFCorePr.ViewModels;
+using EFCorePr.ViewModels.Customer;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -38,9 +38,16 @@ namespace EFCorePr.Controllers
         [HttpGet("get-all")]
         public IActionResult Get()
         {
-            var customers = _dbContext.Customer.Where(c => !c.IsDeleted);
+            var customers = _dbContext.Customer.Where(c => !c.IsDeleted)
+                .Select(c => new
+            {
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    PhoneNum = c.PhoneNum,
+                    NationalCode = c.NationalCode
+            });
 
-            List<CustomerViewData> customerViews = new List<CustomerViewData>();
+            /*List<CustomerViewData> customerViews = new List<CustomerViewData>();
             foreach (var customer in customers)
             {
                 customerViews.Add(new CustomerViewData
@@ -50,9 +57,9 @@ namespace EFCorePr.Controllers
                     PhoneNum = customer.PhoneNum,
                     NationalCode = customer.NationalCode
                 });
-            }
+            }*/
 
-            return Ok(customerViews);
+            return Ok(customers);
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
@@ -64,7 +71,7 @@ namespace EFCorePr.Controllers
             if (selectedCustomer == null)
                 return NotFound("The User Not Found!");
 
-            return Ok(new CustomerViewData
+            return Ok(new
             {
                 FirstName = selectedCustomer.FirstName,
                 LastName = selectedCustomer.LastName,
@@ -75,26 +82,24 @@ namespace EFCorePr.Controllers
 
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpPost("Add")]
-        public async Task<IActionResult> Create([FromForm] CustomerViewData customerView)
+        public async Task<IActionResult> Create([FromForm] AddCustomerViewModel addCustomerView)
         {
-            //var validateResult = _userValidator.Validate();
-
             if (ModelState.IsValid)
             {
-                await _dbContext.Customer.AddAsync(new Customer()
+                _dbContext.Customer.Add(new Customer()
                 {
-                    FirstName = customerView.FirstName,
-                    LastName = customerView.LastName,
-                    PhoneNum = customerView.PhoneNum,
-                    NationalCode = customerView.NationalCode
+                    FirstName = addCustomerView.FirstName,
+                    LastName = addCustomerView.LastName,
+                    PhoneNum = addCustomerView.PhoneNum,
+                    NationalCode = addCustomerView.NationalCode
                 });
 
                 await _dbContext.SaveChangesAsync();
 
-                return RedirectToAction("Get");
+                return Ok();
             }
 
-            return Ok(customerView);
+            return Ok(addCustomerView);
         }
 
 
@@ -155,7 +160,7 @@ namespace EFCorePr.Controllers
 
             await _dbContext.SaveChangesAsync();
 
-            return RedirectToAction("Get");
+            return Ok();
         }
     }
 }

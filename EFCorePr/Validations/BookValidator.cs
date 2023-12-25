@@ -1,5 +1,5 @@
 ﻿using EFCorePr.Models;
-using EFCorePr.ViewModels;
+using EFCorePr.ViewModels.Book;
 using FluentValidation;
 
 namespace EFCorePr.Validations

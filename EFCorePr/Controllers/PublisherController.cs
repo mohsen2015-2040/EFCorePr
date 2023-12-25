@@ -1,7 +1,7 @@
 ﻿using EFCorePr.Controllers.Filter;
 using EFCorePr.Models;
 using EFCorePr.Services;
-using EFCorePr.ViewModels;
+using EFCorePr.ViewModels.Publisher;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,15 +32,19 @@ namespace EFCorePr.Controllers
         [HttpGet("Get-All")]
         public IActionResult Get()
         {
-            var publishers = _dbContext.Publisher.Where(p => !p.IsDeleted);
+            var publishers = _dbContext.Publisher.Where(p => !p.IsDeleted)
+                .Select(p => new
+            {
+                FullName = p.FullName
+            });
 
-            List<PublisherViewData> publisherViews = new List<PublisherViewData>();
+            /*List<PublisherViewData> publisherViews = new List<PublisherViewData>();
             foreach (var publisher in publishers)
             {
                 publisherViews.Add(new PublisherViewData { FullName = publisher.FullName});
-            }
+            }*/
 
-            return Ok(publisherViews);
+            return Ok(publishers);
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
@@ -53,18 +57,23 @@ namespace EFCorePr.Controllers
                 return NotFound("The Publisher Not Found!");
 
               
-            return Ok(new PublisherViewData { FullName = selectedPublisher.FullName});
+            return Ok(new { FullName = selectedPublisher.FullName});
         }
 
 
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpPost("Add")]
-        public async Task<IActionResult> Add([FromForm] PublisherViewData publisherView)
+        public async Task<IActionResult> Add([FromForm] AddPublisherViewModel addPublisherView)
         {
-            await _dbContext.Publisher.AddAsync(new Publisher() { FullName = publisherView.FullName});
-            await _dbContext.SaveChangesAsync();
+            if (ModelState.IsValid)
+            {
+                _dbContext.Publisher.Add(new Publisher() { FullName = addPublisherView.FullName });
+                await _dbContext.SaveChangesAsync();
 
-            return RedirectToAction("Get");
+                return Ok();
+            }
+
+            return Ok(addPublisherView);
         }
 
 
@@ -94,7 +103,7 @@ namespace EFCorePr.Controllers
                 selectedPublisher.FullName = publisherView.FullName;
                 await _dbContext.SaveChangesAsync();
 
-                return RedirectToAction("Get");
+                return Ok();
             }
          
             return Ok(publisherView);
@@ -116,7 +125,7 @@ namespace EFCorePr.Controllers
     
             await _dbContext.SaveChangesAsync();
                 
-            return RedirectToAction("Get");
+            return Ok();
               
         }
     }

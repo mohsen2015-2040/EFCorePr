@@ -1,6 +1,6 @@
 ﻿using EFCorePr.Models;
 
-namespace EFCorePr.ViewModels
+namespace EFCorePr.ViewModels.Rent
 {
     public class RentViewData
     {
@@ -13,7 +13,7 @@ namespace EFCorePr.ViewModels
         public DateTime EndDate { get; set; }
 
         public RentViewData() { }
-        public RentViewData(Rent dbRent)
+        public RentViewData(Models.Rent dbRent)
         {
             BookTitle = dbRent.Book.Title;
             CustomerName = dbRent.Customer.FirstName + dbRent.Customer.LastName;

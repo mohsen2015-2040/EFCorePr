@@ -1,4 +1,4 @@
-﻿using EFCorePr.ViewModels;
+﻿using EFCorePr.ViewModels.Publisher;
 using FluentValidation;
 
 namespace EFCorePr.Validations

@@ -1,7 +1,7 @@
 ﻿using EFCorePr.Controllers.Filter;
 using EFCorePr.Models;
 using EFCorePr.Services;
-using EFCorePr.ViewModels;
+using EFCorePr.ViewModels.Rent;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,9 +31,18 @@ namespace EFCorePr.Controllers
         [HttpGet("Get-All")]
         public IActionResult Get()
         {
-            var rents = _dbContext.Rent.Where(r => !r.IsDeleted).ToList();
+            var rents = _dbContext.Rent.Where(r => !r.IsDeleted).Select(r => new
+            {
+                BookTitle = r.Book.Title,
+                BookIsbn = r.Book.Isbn,
+                CustomerName = (r.Customer.FirstName + r.Customer.LastName),
+                CustomerNationalCode = r.Customer.NationalCode,
+                CustomerPhoneNum = r.Customer.PhoneNum,
+                StartDate = r.StartDate,
+                EndDate = r.FinishDate
+            });
 
-            List<RentViewData> rentViews = new List<RentViewData>();
+            /*List<RentViewData> rentViews = new List<RentViewData>();
             foreach(var rent in rents)
             {
                 rentViews.Add(new RentViewData
@@ -46,9 +55,9 @@ namespace EFCorePr.Controllers
                     EndDate = rent.FinishDate,
                     CustomerPhoneNum = rent.Customer.PhoneNum
                 });
-            }
+            }*/
 
-            return Ok(rentViews);
+            return Ok(rents);
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
@@ -60,7 +69,7 @@ namespace EFCorePr.Controllers
             if (selectedRent == null)
                 return NotFound("Item Not Found!");
 
-            return Ok(new RentViewData 
+            return Ok(new
             {
                 BookTitle = selectedRent.Book.Title,
                 CustomerName = (selectedRent.Customer.FirstName + selectedRent.Customer.LastName),
@@ -74,10 +83,10 @@ namespace EFCorePr.Controllers
 
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpPost("Add")]
-        public async Task<IActionResult> Add([FromForm][Bind("BookIsbn", "CustomerNationalCode", "StartDate", "EndDate")] RentViewData rentView)
+        public async Task<IActionResult> Add([FromForm][Bind("BookIsbn", "CustomerNationalCode", "EndDate")] AddRentViewModel addRentView)
         {
-            var rentViewBook = await _dbContext.Book.FirstOrDefaultAsync(b => b.Isbn == rentView.BookIsbn && !b.IsDeleted);
-            var rentViewCustomer = await _dbContext.Customer.FirstOrDefaultAsync(c => c.NationalCode == rentView.CustomerNationalCode && !c.IsDeleted);
+            var rentViewBook = await _dbContext.Book.FirstOrDefaultAsync(b => b.Isbn == addRentView.BookIsbn && !b.IsDeleted);
+            var rentViewCustomer = await _dbContext.Customer.FirstOrDefaultAsync(c => c.NationalCode == addRentView.CustomerNationalCode && !c.IsDeleted);
 
             if (rentViewBook == null || rentViewCustomer == null)
                 return NotFound("Invalid Input!");
@@ -88,16 +97,15 @@ namespace EFCorePr.Controllers
                 {
                     BookId = rentViewBook.Id,
                     CustomerId = rentViewCustomer.Id,
-                    StartDate = rentView.StartDate,
-                    FinishDate = rentView.EndDate
+                    FinishDate = addRentView.EndDate
                 });
                 rentViewBook.IsAvailaible = false;
 
                 await _dbContext.SaveChangesAsync();
 
-                return RedirectToAction("Get");
+                return Ok();
             }
-            return Ok(rentView);
+            return Ok(addRentView);
 
         }
 
@@ -139,7 +147,7 @@ namespace EFCorePr.Controllers
 
                 await _dbContext.SaveChangesAsync();
 
-                return RedirectToAction("Get");
+                return Ok();
             }
 
             return Ok(rentView);
@@ -157,7 +165,7 @@ namespace EFCorePr.Controllers
             selectedRent.IsDeleted = true;
             await _dbContext.SaveChangesAsync();
 
-            return RedirectToAction("Get");
+            return Ok();
         }
     }
 }

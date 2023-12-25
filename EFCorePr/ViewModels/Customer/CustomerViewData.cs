@@ -1,6 +1,6 @@
 ﻿using EFCorePr.Models;
 
-namespace EFCorePr.ViewModels
+namespace EFCorePr.ViewModels.Customer
 {
     public class CustomerViewData
     {
@@ -10,7 +10,7 @@ namespace EFCorePr.ViewModels
         public string NationalCode { get; set; } = string.Empty;
 
         public CustomerViewData() { }
-        public CustomerViewData(Customer dbCustomer)
+        public CustomerViewData(Models.Customer dbCustomer)
         {
             FirstName = dbCustomer.FirstName;
             LastName = dbCustomer.LastName;
