@@ -1,6 +1,6 @@
 ﻿using FastEndpoints;
 
-namespace EFCorePr.FastEndpoints.MyLiberary
+namespace EFCorePr.FastEndpoints.MyLibrary
 {
     public class Index : EndpointWithoutRequest
     {
