@@ -18,33 +18,28 @@ namespace EFCorePr.FasteEndpoints.Rent.Update
 
         public override async Task HandleAsync(UpdateRentViewModel r, CancellationToken c)
         {
-            if (!ValidationFailed)
-            {
-                var rentBook = await _context.Book
-                    .FirstOrDefaultAsync(b => b.Isbn == r.BookIsbn  && !b.IsDeleted);
+            var rentBook = await _context.Book
+                .FirstOrDefaultAsync(b => b.Isbn == r.BookIsbn && !b.IsDeleted);
 
-                if (rentBook == null) { await SendAsync(new UpdateRentResponse { Message = "Invalid Book!" }); return; }
+            if (rentBook == null) { await SendAsync(new UpdateRentResponse { Message = "Invalid Book!" }); return; }
 
-                var rentCustomer = await _context.Customer
-                    .FirstOrDefaultAsync(c => c.NationalCode == r.CustomerNationalCode && !c.IsDeleted);
+            var rentCustomer = await _context.Customer
+                .FirstOrDefaultAsync(c => c.NationalCode == r.CustomerNationalCode && !c.IsDeleted);
 
-                if (rentCustomer == null) { await SendAsync(new UpdateRentResponse { Message = "Invalid User!" }); return; }
+            if (rentCustomer == null) { await SendAsync(new UpdateRentResponse { Message = "Invalid User!" }); return; }
 
 
-                var rentToUpdate = await _context.Rent.FirstOrDefaultAsync(x => x.Id == r.Id && !x.IsDeleted);
+            var rentToUpdate = await _context.Rent.FirstOrDefaultAsync(x => x.Id == r.Id && !x.IsDeleted);
 
-                if (rentToUpdate == null) { await SendAsync(new UpdateRentResponse { Message = "Invalid Record!" }); return; }
+            if (rentToUpdate == null) { await SendAsync(new UpdateRentResponse { Message = "Invalid Record!" }); return; }
 
-                rentToUpdate.CustomerId = rentCustomer.Id;
-                rentToUpdate.BookId = rentBook.Id;
-                rentToUpdate.FinishDate = r.EndDate;
+            rentToUpdate.CustomerId = rentCustomer.Id;
+            rentToUpdate.BookId = rentBook.Id;
+            rentToUpdate.FinishDate = r.EndDate;
 
-                await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-                await SendAsync(new UpdateRentResponse { Message = "Successfully Edited." });
-                return;
-            }
-            await SendAsync(new UpdateRentResponse { Message = "Invalid Input!" });
+            await SendAsync(new UpdateRentResponse { Message = "Successfully Edited." });
         }
     }
 }

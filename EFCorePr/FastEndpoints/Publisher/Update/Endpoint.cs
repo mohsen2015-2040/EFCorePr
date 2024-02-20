@@ -19,23 +19,18 @@ namespace EFCorePr.FasteEndpoints.Publisher.Update
 
         public override async Task HandleAsync(UpdatePublisherViewModel r, CancellationToken c)
         {
-            if (!ValidationFailed)
+            var publisherToUpdate = await _context.Publisher.FirstOrDefaultAsync(p => p.Id == r.Id && !p.IsDeleted);
+
+            if (publisherToUpdate == null)
             {
-                var publisherToUpdate = await _context.Publisher.FirstOrDefaultAsync(p => p.Id == r.Id && !p.IsDeleted);
-
-                if (publisherToUpdate == null)
-                {
-                    await SendOkAsync(new UpdatePublisherResponse { Message = "Invalid Input!" });
-                    return;
-                }
-
-                publisherToUpdate.FullName = r.FullName;
-                await _context.SaveChangesAsync();
-                
-                await SendOkAsync(new UpdatePublisherResponse { Message = "Successfully Updated."});
+                await SendOkAsync(new UpdatePublisherResponse { Message = "Invalid Input!" });
                 return;
             }
-            await SendOkAsync(new UpdatePublisherResponse { Message = "Invalid Input!" });
+
+            publisherToUpdate.FullName = r.FullName;
+            await _context.SaveChangesAsync();
+
+            await SendOkAsync(new UpdatePublisherResponse { Message = "Successfully Updated." });
         }
     }
 }

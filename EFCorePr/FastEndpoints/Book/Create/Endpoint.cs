@@ -8,7 +8,7 @@ namespace EFCorePr.FastEndpoints.Book.Create
 {
     internal sealed class Endpoint : EndpointWithMapping<CreateBookViewModel, CreateBookResponse, Models.Book>
     {
-        private readonly BookStoreEFCoreContext _context; 
+        private readonly BookStoreEFCoreContext _context;
 
         public Endpoint(BookStoreEFCoreContext context) => _context = context;
 
@@ -21,30 +21,25 @@ namespace EFCorePr.FastEndpoints.Book.Create
 
         public override async Task HandleAsync([Microsoft.AspNetCore.Mvc.FromBody] CreateBookViewModel r, CancellationToken c)
         {
-            if (!ValidationFailed)
+            var bookPublisher = await _context.Publisher.FirstOrDefaultAsync(p => p.FullName == r.PublisherName && !p.IsDeleted);
+
+            if (bookPublisher == null)
             {
-                var bookPublisher = await _context.Publisher.FirstOrDefaultAsync(p => p.FullName == r.PublisherName && !p.IsDeleted);
+                bookPublisher = new Models.Publisher { FullName = r.PublisherName };
 
-                if(bookPublisher == null)
-                {
-                    bookPublisher = new Models.Publisher { FullName = r.PublisherName };
-
-                    _context.Publisher.Add(bookPublisher);
-                    await _context.SaveChangesAsync();
-                }
-
-                var bookToCreate = MapToEntity(r);
-
-                bookToCreate.PublisherId = bookPublisher.Id;
-
-
-                _context.Add(bookToCreate);
+                _context.Publisher.Add(bookPublisher);
                 await _context.SaveChangesAsync();
-
-                await SendAsync(new CreateBookResponse { Message = "Successfully Added!" });
-                return;
             }
-            await SendAsync(new CreateBookResponse { Message = "Invalid Input!" });
+
+            var bookToCreate = MapToEntity(r);
+
+            bookToCreate.PublisherId = bookPublisher.Id;
+
+
+            _context.Add(bookToCreate);
+            await _context.SaveChangesAsync();
+
+            await SendAsync(new CreateBookResponse { Message = "Successfully Added!" });
         }
 
         public override Models.Book MapToEntity(CreateBookViewModel r)

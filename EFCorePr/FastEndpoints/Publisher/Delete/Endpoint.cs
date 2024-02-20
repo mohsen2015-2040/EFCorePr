@@ -23,6 +23,7 @@ namespace EFCorePr.FasteEndpoints.Publisher.Delete
             if (publisherToDelete == null) { await SendAsync(new PublisherDeleteResponse { Message = "Publisher Not Found!" }); return; }
 
             publisherToDelete.IsDeleted = true;
+            await _context.SaveChangesAsync();
 
             await SendAsync(new PublisherDeleteResponse { Message = "Successfully Removed." });
         }

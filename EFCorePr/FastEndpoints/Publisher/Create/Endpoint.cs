@@ -18,17 +18,12 @@ namespace EFCorePr.FasteEndpoints.Publisher.Create
 
         public override async Task HandleAsync(CreatePublisherViewModel r, CancellationToken c)
         {
-            if (!ValidationFailed)
-            {
-                var publisherToCreate = MapToEntity(r);
+            var publisherToCreate = MapToEntity(r);
 
-                _context.Add(publisherToCreate);
-                await _context.SaveChangesAsync();
+            _context.Add(publisherToCreate);
+            await _context.SaveChangesAsync();
 
-                await SendAsync(new CreatePublisherResponse { Message = "Successfully Added." });
-                return;
-            }
-            await SendOkAsync(new CreatePublisherResponse { Message = "Invalid Input!" });
+            await SendAsync(new CreatePublisherResponse { Message = "Successfully Added." });
         }
 
 
