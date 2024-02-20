@@ -1,41 +1,43 @@
-//using EFCorePr.DatabaseContext;
-using EFCorePr.Controllers.Filter;
 using EFCorePr.Models;
-using EFCorePr.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore.Storage;
 using static System.Net.Mime.MediaTypeNames;
 using FluentValidation;
-using EFCorePr.Validations;
 using FluentValidation.AspNetCore;
-using EFCorePr.ViewModels.Book;
-using EFCorePr.ViewModels.Customer;
-using EFCorePr.ViewModels.Publisher;
-using EFCorePr.ViewModels.Rent;
 using FastEndpoints;
+using EFCorePr.FastEndpoints.Book.Create;
+using EFCorePr.FasteEndpoints.Book.Update;
+using EFCorePr.FasteEndpoints.Publisher.Create;
+using EFCorePr.FasteEndpoints.Publisher.Update;
+using EFCorePr.FasteEndpoints.Rent.Create;
+using EFCorePr.FasteEndpoints.Rent.Update;
+using EFCorePr.FasteEndpoints.User.Create;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddFastEndpoints();
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<BookStoreEFCoreContext>(x =>
 x.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString")));
 
-builder.Services.AddScoped<IGenerateGuideToRoutsService, GenerateGuideToRoutsService>();
+builder.Services.AddScoped<IValidator<CreateBookViewModel>, CreateBookValidator>();
+builder.Services.AddScoped<IValidator<UpdateBookViewModel>, UpdateBookValidator>();
 
-builder.Services.AddScoped<ExceptionHandler>();
+builder.Services.AddScoped<IValidator<CreatePublisherViewModel>, CreatePublisherValidator>();
+builder.Services.AddScoped<IValidator<UpdatePublisherViewModel>, UpdatePublisherValidator>();
 
-builder.Services.AddScoped<LogActionActivity>();
+builder.Services.AddScoped<IValidator<CreateRentViewModel>, CreateRentValidator>();
+builder.Services.AddScoped<IValidator<UpdateRentViewModel>, UpdateRentValidator>();
 
-builder.Services.AddScoped<IValidator<CustomerViewData>, UserValidator>();
-builder.Services.AddScoped<IValidator<BookViewData>, BookValidator>();
-builder.Services.AddScoped<IValidator<PublisherViewData>, PublisherValidator>();
-builder.Services.AddScoped<IValidator<RentViewData>, RentValidator>();
+builder.Services.AddScoped<IValidator<CreateUserViewModel>, CreateUserValidator>();
+builder.Services.AddScoped<IValidator<CreateUserViewModel>, CreateUserValidator>();
 
 var app = builder.Build();
 
@@ -57,7 +59,7 @@ if (!app.Environment.IsDevelopment())
     ));
 }
 
-app.UseFastEndpoints();
+app.UseFastEndpoints().UseDefaultExceptionHandler();
 
 app.UseHsts();
 
@@ -65,7 +67,5 @@ app.UseHsts();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
-app.MapControllers();
 
 app.Run();
