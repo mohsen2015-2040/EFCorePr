@@ -17,7 +17,7 @@ public partial class Rent
 
     public DateTime FinishDate { get; set; }
 
-    public bool IsDeleted { get; set; } = false;
+    public bool IsDeleted { get; set; }
 
     public virtual Book Book { get; set; }
 

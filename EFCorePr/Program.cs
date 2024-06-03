@@ -1,7 +1,6 @@
 //using EFCorePr.DatabaseContext;
 using EFCorePr.Controllers.Filter;
 using EFCorePr.Models;
-using EFCorePr.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -9,7 +8,15 @@ using static System.Net.Mime.MediaTypeNames;
 using FluentValidation;
 using EFCorePr.Validations;
 using FluentValidation.AspNetCore;
-using EFCorePr.ViewModels;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using EFCorePr.ViewModels.Customer.Create;
+using EFCorePr.ViewModels.Book.Create;
+using EFCorePr.ViewModels.Publisher.Create;
+using EFCorePr.ViewModels.Rent.Create;
+using EFCorePr.ViewModels.Rent.Update;
+using EFCorePr.ViewModels.Customer.Update;
+using EFCorePr.ViewModels.Publisher.Update;
+using EFCorePr.ViewModels.Book.Update;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,20 +28,36 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddDbContext<BookStoreEFCoreContext>(x =>
 x.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString")));
 
-builder.Services.AddScoped<IGenerateGuideToRoutsService, GenerateGuideToRoutsService>();
+
+builder.Services.AddAuthentication(option =>
+{
+    option.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+    {
+        options.Cookie.HttpOnly = true;
+        options.ExpireTimeSpan = TimeSpan.FromDays(1);
+        options.LoginPath = "/auth/login";
+        options.SlidingExpiration = true;
+    });
 
 builder.Services.AddScoped<ExceptionHandler>();
 
 builder.Services.AddScoped<LogActionActivity>();
 
-builder.Services.AddScoped<IValidator<CustomerViewData>, UserValidator>();
-builder.Services.AddScoped<IValidator<BookViewData>, BookValidator>();
-builder.Services.AddScoped<IValidator<PublisherViewData>, PublisherValidator>();
-builder.Services.AddScoped<IValidator<RentViewData>, RentValidator>();
+builder.Services.AddScoped<IValidator<CreateCustomerViewModel>, CreateCustomerValidator>();
+builder.Services.AddScoped<IValidator<CreateBookViewModel>, CreateBookValidator>();
+builder.Services.AddScoped<IValidator<CreatePublisherViewModel>, CreatePublisherValidator>();
+builder.Services.AddScoped<IValidator<CreateRentViewModel>, CreateRentValidator>();
+builder.Services.AddScoped<IValidator<UpdateRentViewModel>, UpdateRentValidator>();
+builder.Services.AddScoped<IValidator<UpdateCustomerViewModel>, UpdateCustomerValidator>();
+builder.Services.AddScoped<IValidator<UpdatePublisherViewmodel>, UpdatePublisherValidator>();
+builder.Services.AddScoped<IValidator<UpdateBookViewModel>, UpdateBookValidator>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment()){
+if (app.Environment.IsDevelopment())
+{
     app.UseDeveloperExceptionPage();
 }
 
@@ -57,6 +80,7 @@ app.UseHsts();
 // Configure the HTTP request pipeline.
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

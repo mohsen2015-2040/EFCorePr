@@ -1,12 +1,13 @@
 ﻿using EFCorePr.Models;
 using EFCorePr.ViewModels;
+using EFCorePr.ViewModels.Book.Create;
 using FluentValidation;
 
 namespace EFCorePr.Validations
 {
-    public class BookValidator : AbstractValidator<BookViewData>
+    public class CreateBookValidator : AbstractValidator<CreateBookViewModel>
     {
-        public BookValidator() 
+        public CreateBookValidator() 
         {
             RuleFor(b => b.Isbn).NotEmpty().WithMessage("Isbn Can Not Be Empty!");
 

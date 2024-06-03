@@ -1,11 +1,12 @@
 ﻿using EFCorePr.ViewModels;
+using EFCorePr.ViewModels.Publisher.Create;
 using FluentValidation;
 
 namespace EFCorePr.Validations
 {
-    public class PublisherValidator : AbstractValidator<PublisherViewData>
+    public class CreatePublisherValidator : AbstractValidator<CreatePublisherViewModel>
     {
-        public PublisherValidator() 
+        public CreatePublisherValidator() 
         {
             RuleFor(p => p.FullName).NotEmpty().WithMessage("FullName Can Not Be Null!");
         }

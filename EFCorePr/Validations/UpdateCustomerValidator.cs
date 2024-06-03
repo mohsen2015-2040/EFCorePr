@@ -1,12 +1,11 @@
-﻿
-using EFCorePr.ViewModels;
+﻿using EFCorePr.ViewModels.Customer.Update;
 using FluentValidation;
 
 namespace EFCorePr.Validations
 {
-    public class UserValidator : AbstractValidator<CustomerViewData>
+    public class UpdateCustomerValidator : AbstractValidator<UpdateCustomerViewModel>
     {
-        public UserValidator()
+        public UpdateCustomerValidator() 
         {
             RuleFor(u => u.NationalCode).Length(10).WithMessage("NationalCode Must Be 10 Characters!");
             RuleFor(u => u.NationalCode).NotEmpty().WithMessage("NationalCode Can Not Be Empty!");

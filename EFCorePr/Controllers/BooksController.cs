@@ -1,9 +1,10 @@
 ﻿//using EFCorePr.DatabaseContext;
 using EFCorePr.Controllers.Filter;
 using EFCorePr.Models;
-using EFCorePr.Services;
 using EFCorePr.Tools;
 using EFCorePr.ViewModels;
+using EFCorePr.ViewModels.Book.Create;
+using EFCorePr.ViewModels.Book.Update;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,40 +15,24 @@ namespace EFCorePr.Controllers
     public class BooksController : Controller
     {
         private readonly BookStoreEFCoreContext _dbContext;
-        private readonly IGenerateGuideToRoutsService _generateGuide;
 
-        public BooksController(BookStoreEFCoreContext bookStoreContext, IGenerateGuideToRoutsService generateGuide, ILogger<BooksController> logger)
+        public BooksController(BookStoreEFCoreContext bookStoreContext)
         {
             _dbContext = bookStoreContext;
-            _generateGuide = generateGuide;
-        }
-
-        //Actions
-        public ActionResult Index()
-        {
-            var guideMessage = _generateGuide.GenerateMessage(typeof(Book));
-            return Ok(guideMessage);
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpGet("get-all")]
         public IActionResult Get()
         {
-            var books = _dbContext.Book.Where(b => !b.IsDeleted).ToList();
-
-            List<BookViewData> bookViews = new List<BookViewData>();
-            foreach (var b in books)
+            var books = _dbContext.Book.Where(b => !b.IsDeleted).Select(b => new
             {
-                bookViews.Add(new BookViewData
-                {
-                    Title = b.Title,
-                    Description = b.Description,
-                    PublisherName = b.Publisher.FullName,
-                    Isbn = b.Isbn
-                });
-            }
+                Title = b.Title,
+                Isbn = b.Isbn,
+                Description = b.Description
+            }).ToList();
 
-            return Ok(bookViews);
+            return Ok(books);
         }
 
         [ServiceFilter(typeof(LogActionActivity))]
@@ -59,7 +44,7 @@ namespace EFCorePr.Controllers
             if (selectedBook == null)
                 return NotFound("The Book not found!");
 
-            return Ok(new BookViewData
+            return Ok(new
             {
                 Title = selectedBook.Title,
                 Description = selectedBook.Description,
@@ -70,16 +55,23 @@ namespace EFCorePr.Controllers
 
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpPost("add")]
-        public async Task<IActionResult> Add([FromForm] BookViewData bookView)
+        public async Task<IActionResult> Add([FromForm] CreateBookViewModel bookView)
         {
-            var bookViewPublisher = _dbContext.Publisher.FirstOrDefault(p => p.FullName == bookView.PublisherName && !p.IsDeleted);
+            var bookViewPublisher = await _dbContext.Publisher
+                .FirstOrDefaultAsync(p => p.FullName == bookView.PublisherName && !p.IsDeleted);
 
             if (bookViewPublisher == null)
-                return NotFound("Publisher Is Not Valid!");
+            {
+                bookViewPublisher = new Publisher { FullName = bookView.PublisherName };
+
+                _dbContext.Publisher.Add(bookViewPublisher);
+
+                await _dbContext.SaveChangesAsync();
+            }
 
             if (ModelState.IsValid)
             {
-                await _dbContext.Book.AddAsync(new Book
+                _dbContext.Book.Add(new Book
                 {
                     Title = bookView.Title,
                     Isbn = bookView.Isbn,
@@ -89,7 +81,7 @@ namespace EFCorePr.Controllers
 
                 await _dbContext.SaveChangesAsync();
 
-                return RedirectToAction("Get");
+                return Ok();
             }
             return Ok(bookView);
         }
@@ -104,7 +96,7 @@ namespace EFCorePr.Controllers
             if (selectedBook == null)
                 return NotFound("The Book Not Found!");
 
-            return Ok(new BookViewData
+            return Ok(new UpdateBookViewModel
             {
                 Title = selectedBook.Title,
                 Description = selectedBook.Description,
@@ -115,13 +107,25 @@ namespace EFCorePr.Controllers
 
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpPost("edit/{Id}")]
-        public async Task<IActionResult> Update(int Id, [FromForm] BookViewData bookView)
+        public async Task<IActionResult> Update([FromForm] UpdateBookViewModel bookView)
         {
-            var bookViewPublisher = await _dbContext.Publisher.FirstOrDefaultAsync(p => p.FullName == bookView.PublisherName && !p.IsDeleted);
-            var selecedBook = await _dbContext.Book.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
+            var bookViewPublisher = await _dbContext.Publisher
+                .FirstOrDefaultAsync(p => p.FullName == bookView.PublisherName && !p.IsDeleted);
+            
+            var selecedBook = await _dbContext.Book
+                .FirstOrDefaultAsync(x => x.Id == bookView.Id && !x.IsDeleted);
 
-            if (bookViewPublisher == null || selecedBook == null)
+
+            if (selecedBook == null)
                 return NotFound("Not Found!");
+
+            if (bookViewPublisher == null)
+            {
+                bookViewPublisher = new Publisher { FullName = bookView.PublisherName };
+
+                _dbContext.Add(bookViewPublisher);
+                await _dbContext.SaveChangesAsync();
+            }
 
             if (ModelState.IsValid)
             {
@@ -132,7 +136,7 @@ namespace EFCorePr.Controllers
 
                 await _dbContext.SaveChangesAsync();
 
-                return RedirectToAction("Get");
+                return Ok();
             }
             return Ok(bookView);
         }
@@ -152,7 +156,7 @@ namespace EFCorePr.Controllers
             selectedBook.IsDeleted = true;
             await _dbContext.SaveChangesAsync();
 
-            return RedirectToAction("Get");
+            return Ok("Deleted!");
         }
     }
 }

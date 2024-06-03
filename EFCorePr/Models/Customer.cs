@@ -19,5 +19,10 @@ public partial class Customer
 
     public bool IsDeleted { get; set; } = false;
 
+    public string Password { get; set; }
+
+    public string UserName { get; set; }
+
     public virtual ICollection<Rent> Rent { get; set; } = new List<Rent>();
+
 }

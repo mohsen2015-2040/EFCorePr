@@ -17,9 +17,9 @@ public partial class Book
 
     public string Description { get; set; }
 
-    public bool IsDeleted { get; set; } = false;
+    public bool IsDeleted { get; set; }
 
-    public bool IsAvailaible { get; set; } = true;
+    public bool IsAvailaible { get; set; }
 
     public virtual Publisher Publisher { get; set; }
 

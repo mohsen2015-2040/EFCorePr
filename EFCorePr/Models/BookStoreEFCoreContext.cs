@@ -73,10 +73,17 @@ public partial class BookStoreEFCoreContext : DbContext
                 .IsRequired()
                 .HasMaxLength(10)
                 .IsUnicode(false);
+            entity.Property(e => e.Password)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.PhoneNum)
                 .IsRequired()
                 .HasMaxLength(11)
                 .IsUnicode(false);
+            entity.Property(e => e.UserName)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<Publisher>(entity =>
