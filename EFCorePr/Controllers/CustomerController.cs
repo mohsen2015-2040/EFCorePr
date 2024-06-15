@@ -34,8 +34,6 @@ namespace EFCorePr.Controllers
                     NationalCOde = c.NationalCode
                 });
 
-            
-
             return Ok(customers);
         }
 

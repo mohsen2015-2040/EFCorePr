@@ -5,11 +5,14 @@ using EFCorePr.Tools;
 using EFCorePr.ViewModels;
 using EFCorePr.ViewModels.Book.Create;
 using EFCorePr.ViewModels.Book.Update;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EFCorePr.Controllers
 {
+
+    //[Authorize]
     [TypeFilter(typeof(ExceptionHandler))]
     [Route("MyLibrary/[controller]")]
     public class BooksController : Controller
@@ -21,6 +24,7 @@ namespace EFCorePr.Controllers
             _dbContext = bookStoreContext;
         }
 
+        [Authorize]
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpGet("get-all")]
         public IActionResult Get()
@@ -85,7 +89,6 @@ namespace EFCorePr.Controllers
             }
             return Ok(bookView);
         }
-
 
         [ServiceFilter(typeof(LogActionActivity))]
         [HttpGet("edit/{Id}")]

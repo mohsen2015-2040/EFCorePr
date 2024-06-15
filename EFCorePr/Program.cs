@@ -17,6 +17,10 @@ using EFCorePr.ViewModels.Rent.Update;
 using EFCorePr.ViewModels.Customer.Update;
 using EFCorePr.ViewModels.Publisher.Update;
 using EFCorePr.ViewModels.Book.Update;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using EFCorePr.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,18 +29,29 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
 
+
 builder.Services.AddDbContext<BookStoreEFCoreContext>(x =>
 x.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString")));
 
+var jwtSettings = builder.Configuration.GetSection("JWTSettings");
 
 builder.Services.AddAuthentication(option =>
 {
-    option.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    option.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
+    .AddJwtBearer(option => option.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidAudience = jwtSettings["Audience"],
+        ValidIssuer = jwtSettings["Issuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]))
+    })
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.Cookie.HttpOnly = true;
-        options.ExpireTimeSpan = TimeSpan.FromDays(1);
         options.LoginPath = "/auth/login";
         options.SlidingExpiration = true;
     });
@@ -44,6 +59,8 @@ builder.Services.AddAuthentication(option =>
 builder.Services.AddScoped<ExceptionHandler>();
 
 builder.Services.AddScoped<LogActionActivity>();
+
+builder.Services.AddScoped<JWTTokenGenerator>();
 
 builder.Services.AddScoped<IValidator<CreateCustomerViewModel>, CreateCustomerValidator>();
 builder.Services.AddScoped<IValidator<CreateBookViewModel>, CreateBookValidator>();
