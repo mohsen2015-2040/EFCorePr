@@ -15,8 +15,6 @@ namespace EFCorePr.Services
         public string GenerateToken(string userName, DateTime dateTime)
         {
             var jwtSetting = _configuration.GetSection("JWTSettings");
-            var key = new GenerateKey().Generate();
-
 
             var secretKey = Encoding.UTF8.GetBytes(jwtSetting["SecretKey"]);
             var audience = jwtSetting["Audience"];
