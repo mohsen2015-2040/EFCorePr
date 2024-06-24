@@ -13,9 +13,9 @@ namespace EFCorePr.Controllers
     [Route("MyLibrary/[controller]")]
     public class PublisherController : Controller
     {
-        private readonly BookStoreEFCoreContext _dbContext;
+        private readonly BookStoreContext _dbContext;
 
-        public PublisherController(BookStoreEFCoreContext bookStoreEFCoreContext)
+        public PublisherController(BookStoreContext bookStoreEFCoreContext)
         {
             _dbContext = bookStoreEFCoreContext;
         }

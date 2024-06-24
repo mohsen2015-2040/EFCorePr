@@ -12,6 +12,10 @@ namespace EFCorePr.ViewModels.Book.Update
 
         public string Isbn { get; set; } = string.Empty;
 
+        public int Price { get; set; }
+
         public string PublisherName { get; set; } = string.Empty;
+
+        public string AuthorName { get; set; } = string.Empty;
     }
 }

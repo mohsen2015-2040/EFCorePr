@@ -5,21 +5,15 @@ using System.Collections.Generic;
 
 namespace EFCorePr.Models;
 
-public partial class Rent
+public partial class AuthorBook
 {
     public int Id { get; set; }
 
-    public int CustomerId { get; set; }
-
     public int BookId { get; set; }
 
-    public DateTime StartDate { get; set; }
+    public int AuthorId { get; set; }
 
-    public DateTime FinishDate { get; set; }
-
-    public bool IsDeleted { get; set; }
+    public virtual Author Author { get; set; }
 
     public virtual Book Book { get; set; }
-
-    public virtual Customer Customer { get; set; }
 }

@@ -13,10 +13,10 @@ namespace EFCorePr.Controllers
     [Route("MyLibrary/[controller]")]
     public class AccountController : Controller
     {
-        private readonly BookStoreEFCoreContext _context;
+        private readonly BookStoreContext _context;
         private readonly JWTTokenGenerator _jwtTokenGenerator;
 
-        public AccountController(BookStoreEFCoreContext context, JWTTokenGenerator tokenGenerator) 
+        public AccountController(BookStoreContext context, JWTTokenGenerator tokenGenerator) 
         {
             _context = context;
             _jwtTokenGenerator = tokenGenerator; 
@@ -31,15 +31,6 @@ namespace EFCorePr.Controllers
 
             if (userToAuthenticate != null)
             {
-                //var claims = new List<Claim>
-                //{
-                //    new Claim(ClaimTypes.Name, userName)
-                //};
-
-                //var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                //var principal = new ClaimsPrincipal(identity);
-
-                //await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
                 var token = _jwtTokenGenerator.GenerateToken(userName, DateTime.Now +  TimeSpan.FromDays(1));
 
                 Response.Cookies.Append("jwt", token);

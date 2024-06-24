@@ -9,19 +9,23 @@ public partial class Book
 {
     public int Id { get; set; }
 
-    public int PublisherId { get; set; }
-
     public string Title { get; set; }
 
     public string Isbn { get; set; }
 
+    public int Price { get; set; }
+
+    public int PublisherId { get; set; }
+
     public string Description { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; set; } = false;
 
-    public bool IsAvailaible { get; set; }
+    public bool IsAvailable { get; set; } = true;
+
+    public virtual ICollection<AuthorBook> AuthorBook { get; set; } = new List<AuthorBook>();
+
+    public virtual ICollection<CartBook> CartBook { get; set; } = new List<CartBook>();
 
     public virtual Publisher Publisher { get; set; }
-
-    public virtual ICollection<Rent> Rent { get; set; } = new List<Rent>();
 }

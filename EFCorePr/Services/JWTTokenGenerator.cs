@@ -19,7 +19,6 @@ namespace EFCorePr.Services
 
 
             var secretKey = Encoding.UTF8.GetBytes(jwtSetting["SecretKey"]);
-            //Encoding.UTF8.GetBytes(key);
             var audience = jwtSetting["Audience"];
             var issuer = jwtSetting["Issuer"];
 

@@ -11,5 +11,9 @@
 
         public string PublisherName { get; set; } = string.Empty;
 
+        public string AuthorFName { get; set; } = string.Empty;
+        public string AuthorLName { get; set; } = string.Empty;
+        public int Price { get; set; }
+
     }
 }

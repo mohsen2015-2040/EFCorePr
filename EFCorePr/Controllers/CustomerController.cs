@@ -1,10 +1,9 @@
 ﻿using EFCorePr.Controllers.Filter;
 using EFCorePr.Models;
-using EFCorePr.Tools;
-using EFCorePr.ViewModels;
 using EFCorePr.ViewModels.Customer.Create;
 using EFCorePr.ViewModels.Customer.Update;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,23 +14,24 @@ namespace EFCorePr.Controllers
     [Route("MyLibrary/[controller]")]
     public class CustomerController : Controller
     {
-        private readonly BookStoreEFCoreContext _dbContext;
+        private readonly BookStoreContext _dbContext;
 
-        public CustomerController(BookStoreEFCoreContext dbContext)
+        public CustomerController(BookStoreContext dbContext)
         {
             _dbContext = dbContext;
         }
 
+        [Authorize]
         [HttpGet("get-all")]
         public IActionResult Get()
         {
             var customers = _dbContext.Customer.Where(c => !c.IsDeleted)
                 .Select(c => new
                 {
-                    FirstName = c.FirstName,
-                    LastName = c.LastName,
+                    FirstName = c.Fname,
+                    LastName = c.Lname,
                     PhoneNum = c.PhoneNum,
-                    NationalCOde = c.NationalCode
+                    Address = c.Address
                 });
 
             return Ok(customers);
@@ -47,13 +47,14 @@ namespace EFCorePr.Controllers
 
             return Ok(new
             {
-                FirstName = selectedCustomer.FirstName,
-                LastName = selectedCustomer.LastName,
+                FirstName = selectedCustomer.Fname,
+                LastName = selectedCustomer.Lname,
                 PhoneNum = selectedCustomer.PhoneNum,
-                NationalCode = selectedCustomer.NationalCode
+                Address = selectedCustomer.Address
             });
         }
 
+        [AllowAnonymous]
         [HttpPost("Add")]
         public async Task<IActionResult> Create([FromForm] CreateCustomerViewModel customerView)
         {
@@ -61,15 +62,24 @@ namespace EFCorePr.Controllers
             if (ModelState.IsValid)
             {
 
-                _dbContext.Customer.Add(new Customer()
+                var customerToAdd = _dbContext.Customer.Add(new Customer()
                 {
-                    FirstName = customerView.FirstName,
-                    LastName = customerView.LastName,
+                    Fname = customerView.FirstName,
+                    Lname = customerView.LastName,
                     PhoneNum = customerView.PhoneNum,
-                    NationalCode = customerView.NationalCode,
                     Password = customerView.Password,
-                    UserName = customerView.NationalCode
+                    UserName = customerView.PhoneNum,
+                    Address = customerView.Address
                 });
+                await _dbContext.SaveChangesAsync();
+
+                var cartToAdd = _dbContext.Cart.Add(new Cart()
+                {
+                    UserId = customerToAdd.Entity.Id
+                });
+                await _dbContext.SaveChangesAsync();
+
+                customerToAdd.Entity.CartId = cartToAdd.Entity.Id;
 
                 await _dbContext.SaveChangesAsync();
 
@@ -79,7 +89,7 @@ namespace EFCorePr.Controllers
             return Ok(customerView);
         }
 
-
+        [Authorize]
         [HttpGet("edit/{Id}")]
         public async Task<IActionResult> Update(int Id)
         {
@@ -91,13 +101,14 @@ namespace EFCorePr.Controllers
 
             return Ok(new UpdateCustomerViewModel
             {
-                FirstName = selectedCustomer.FirstName,
-                LastName = selectedCustomer.LastName,
+                FirstName = selectedCustomer.Fname,
+                LastName = selectedCustomer.Lname,
                 PhoneNum = selectedCustomer.PhoneNum,
-                NationalCode = selectedCustomer.NationalCode
+                Address = selectedCustomer.Address
             });
         }
 
+        [Authorize]
         [HttpPost("Edit/{Id}")]
         public async Task<IActionResult> Update([FromForm] UpdateCustomerViewModel customerView)
         {
@@ -109,11 +120,11 @@ namespace EFCorePr.Controllers
 
             if (ModelState.IsValid)
             {
-                selectedCustomer.FirstName = customerView.FirstName;
-                selectedCustomer.LastName = customerView.LastName;
+                selectedCustomer.Fname = customerView.FirstName;
+                selectedCustomer.Lname = customerView.LastName;
                 selectedCustomer.PhoneNum = customerView.PhoneNum;
-                selectedCustomer.NationalCode = customerView.NationalCode;
-                selectedCustomer.Password = customerView.Password;
+                //selectedCustomer.Password = customerView.Password;
+                selectedCustomer.Address = customerView.Address;
 
                 await _dbContext.SaveChangesAsync();
 
@@ -123,7 +134,7 @@ namespace EFCorePr.Controllers
 
         }
 
-
+        [Authorize]
         [HttpPost("Delete/{Id}")]
         public async Task<IActionResult> Delete(int Id)
         {

@@ -1,6 +1,6 @@
 ﻿{
    "CodeGenerationMode": 3,
-   "ContextClassName": "BookStoreEFCoreContext",
+   "ContextClassName": "BookStoreContext",
    "ContextNamespace": null,
    "DefaultDacpacSchema": null,
    "FilterSchemas": false,
@@ -16,7 +16,23 @@
    "T4TemplatePath": null,
    "Tables": [
       {
+         "Name": "[dbo].[Author]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Author_Book]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Book]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Cart]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Cart_Book]",
          "ObjectType": 0
       },
       {
@@ -26,13 +42,9 @@
       {
          "Name": "[dbo].[Publisher]",
          "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Rent]",
-         "ObjectType": 0
       }
    ],
-   "UiHint": "BookStoreEF",
+   "UiHint": "desktop-rgsvcvk.BookStore.dbo",
    "UncountableWords": null,
    "UseBoolPropertiesWithoutDefaultSql": false,
    "UseDatabaseNames": false,

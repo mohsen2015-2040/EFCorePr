@@ -5,13 +5,15 @@ using System.Collections.Generic;
 
 namespace EFCorePr.Models;
 
-public partial class Publisher
+public partial class Author
 {
     public int Id { get; set; }
 
-    public string FullName { get; set; }
+    public string Fname { get; set; }
+
+    public string Lname { get; set; }
 
     public bool IsDeleted { get; set; } = false;
 
-    public virtual ICollection<Book> Book { get; set; } = new List<Book>();
+    public virtual ICollection<AuthorBook> AuthorBook { get; set; } = new List<AuthorBook>();
 }

@@ -12,8 +12,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using EFCorePr.ViewModels.Customer.Create;
 using EFCorePr.ViewModels.Book.Create;
 using EFCorePr.ViewModels.Publisher.Create;
-using EFCorePr.ViewModels.Rent.Create;
-using EFCorePr.ViewModels.Rent.Update;
 using EFCorePr.ViewModels.Customer.Update;
 using EFCorePr.ViewModels.Publisher.Update;
 using EFCorePr.ViewModels.Book.Update;
@@ -30,7 +28,7 @@ builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
 
 
-builder.Services.AddDbContext<BookStoreEFCoreContext>(x =>
+builder.Services.AddDbContext<BookStoreContext>(x =>
 x.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString")));
 
 var jwtSettings = builder.Configuration.GetSection("JWTSettings");
@@ -65,8 +63,6 @@ builder.Services.AddScoped<JWTTokenGenerator>();
 builder.Services.AddScoped<IValidator<CreateCustomerViewModel>, CreateCustomerValidator>();
 builder.Services.AddScoped<IValidator<CreateBookViewModel>, CreateBookValidator>();
 builder.Services.AddScoped<IValidator<CreatePublisherViewModel>, CreatePublisherValidator>();
-builder.Services.AddScoped<IValidator<CreateRentViewModel>, CreateRentValidator>();
-builder.Services.AddScoped<IValidator<UpdateRentViewModel>, UpdateRentValidator>();
 builder.Services.AddScoped<IValidator<UpdateCustomerViewModel>, UpdateCustomerValidator>();
 builder.Services.AddScoped<IValidator<UpdatePublisherViewmodel>, UpdatePublisherValidator>();
 builder.Services.AddScoped<IValidator<UpdateBookViewModel>, UpdateBookValidator>();

@@ -9,20 +9,21 @@ public partial class Customer
 {
     public int Id { get; set; }
 
-    public string FirstName { get; set; }
+    public string Fname { get; set; }
 
-    public string LastName { get; set; }
+    public string Lname { get; set; }
 
-    public string NationalCode { get; set; }
+    public string Address { get; set; }
 
     public string PhoneNum { get; set; }
 
-    public bool IsDeleted { get; set; } = false;
+    public string UserName { get; set; }
 
     public string Password { get; set; }
 
-    public string UserName { get; set; }
+    public bool IsDeleted { get; set; } = false;
 
-    public virtual ICollection<Rent> Rent { get; set; } = new List<Rent>();
+    public int? CartId { get; set; }
 
+    public virtual Cart Cart { get; set; }
 }

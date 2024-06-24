@@ -1,8 +1,6 @@
 ﻿//using EFCorePr.DatabaseContext;
 using EFCorePr.Controllers.Filter;
 using EFCorePr.Models;
-using EFCorePr.Tools;
-using EFCorePr.ViewModels;
 using EFCorePr.ViewModels.Book.Create;
 using EFCorePr.ViewModels.Book.Update;
 using Microsoft.AspNetCore.Authorization;
@@ -11,21 +9,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EFCorePr.Controllers
 {
-
-    //[Authorize]
+    [Authorize]
     [TypeFilter(typeof(ExceptionHandler))]
+    [TypeFilter(typeof(LogActionActivity))]
     [Route("MyLibrary/[controller]")]
     public class BooksController : Controller
     {
-        private readonly BookStoreEFCoreContext _dbContext;
+        private readonly BookStoreContext _dbContext;
 
-        public BooksController(BookStoreEFCoreContext bookStoreContext)
+        public BooksController(BookStoreContext bookStoreContext)
         {
             _dbContext = bookStoreContext;
         }
 
-        [Authorize]
-        [ServiceFilter(typeof(LogActionActivity))]
         [HttpGet("get-all")]
         public IActionResult Get()
         {
@@ -33,13 +29,16 @@ namespace EFCorePr.Controllers
             {
                 Title = b.Title,
                 Isbn = b.Isbn,
-                Description = b.Description
+                Description = b.Description,
+                Price = b.Price,
+                PublisherName = b.Publisher.FullName,
+                AuthorName = b.AuthorBook.Where(x => x.BookId == b.Id)
+                .Select(z => new { name = z.Author.Fname + z.Author.Lname })
             }).ToList();
 
             return Ok(books);
         }
 
-        [ServiceFilter(typeof(LogActionActivity))]
         [HttpGet("search-book/{Id}")]
         public async Task<IActionResult> GetByID(int Id)
         {
@@ -53,16 +52,23 @@ namespace EFCorePr.Controllers
                 Title = selectedBook.Title,
                 Description = selectedBook.Description,
                 PublisherName = selectedBook.Publisher.FullName,
-                Isbn = selectedBook.Isbn
+                Isbn = selectedBook.Isbn,
+                price = selectedBook.Price,
+                AuthorName = selectedBook.AuthorBook.Where(x => x.BookId == selectedBook.Id)
+                .Select(z => new {name = z.Author.Fname + z.Author.Lname})
             });
         }
 
-        [ServiceFilter(typeof(LogActionActivity))]
         [HttpPost("add")]
         public async Task<IActionResult> Add([FromForm] CreateBookViewModel bookView)
         {
             var bookViewPublisher = await _dbContext.Publisher
                 .FirstOrDefaultAsync(p => p.FullName == bookView.PublisherName && !p.IsDeleted);
+
+            var bookViewAuthor = await _dbContext.Author
+                .FirstOrDefaultAsync(a => (a.Fname + a.Lname) == (bookView.AuthorFName + bookView.AuthorLName) 
+                && !a.IsDeleted);
+
 
             if (bookViewPublisher == null)
             {
@@ -73,24 +79,41 @@ namespace EFCorePr.Controllers
                 await _dbContext.SaveChangesAsync();
             }
 
+            if (bookViewAuthor == null)
+            {
+                bookViewAuthor = new Author { Fname = bookView.AuthorFName, Lname = bookView.AuthorLName };
+
+                _dbContext.Author.Add(bookViewAuthor);
+
+                await _dbContext.SaveChangesAsync();
+            }
+
+
             if (ModelState.IsValid)
             {
-                _dbContext.Book.Add(new Book
+                var bookToCreate =  _dbContext.Book.Add(new Book
                 {
                     Title = bookView.Title,
                     Isbn = bookView.Isbn,
                     Description = bookView.Description,
-                    PublisherId = bookViewPublisher.Id
+                    PublisherId = bookViewPublisher.Id,
+                    Price = bookView.Price
+                });
+                await _dbContext.SaveChangesAsync();
+
+                _dbContext.AuthorBook.Add(new AuthorBook
+                {
+                    AuthorId = bookViewAuthor.Id,
+                    BookId = bookToCreate.Entity.Id
                 });
 
                 await _dbContext.SaveChangesAsync();
-
                 return Ok();
             }
             return Ok(bookView);
         }
 
-        [ServiceFilter(typeof(LogActionActivity))]
+
         [HttpGet("edit/{Id}")]
         public async Task<IActionResult> Update(int Id)
         {
@@ -108,18 +131,18 @@ namespace EFCorePr.Controllers
             });
         }
 
-        [ServiceFilter(typeof(LogActionActivity))]
+
         [HttpPost("edit/{Id}")]
         public async Task<IActionResult> Update([FromForm] UpdateBookViewModel bookView)
         {
             var bookViewPublisher = await _dbContext.Publisher
                 .FirstOrDefaultAsync(p => p.FullName == bookView.PublisherName && !p.IsDeleted);
             
-            var selecedBook = await _dbContext.Book
+            var selectedBook = await _dbContext.Book
                 .FirstOrDefaultAsync(x => x.Id == bookView.Id && !x.IsDeleted);
 
 
-            if (selecedBook == null)
+            if (selectedBook == null)
                 return NotFound("Not Found!");
 
             if (bookViewPublisher == null)
@@ -132,10 +155,11 @@ namespace EFCorePr.Controllers
 
             if (ModelState.IsValid)
             {
-                selecedBook.Title = bookView.Title;
-                selecedBook.Description = bookView.Description;
-                selecedBook.Isbn = bookView.Isbn;
-                selecedBook.PublisherId = bookViewPublisher.Id;
+                selectedBook.Title = bookView.Title;
+                selectedBook.Description = bookView.Description;
+                selectedBook.Isbn = bookView.Isbn;
+                selectedBook.Price = bookView.Price;
+                selectedBook.PublisherId = bookViewPublisher.Id;
 
                 await _dbContext.SaveChangesAsync();
 
@@ -146,7 +170,6 @@ namespace EFCorePr.Controllers
 
 
 
-        [ServiceFilter(typeof(LogActionActivity))]
         [HttpPost("Delete/{Id}")]
         public async Task<IActionResult> Delete(int Id)
         {
