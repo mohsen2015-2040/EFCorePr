@@ -13,6 +13,8 @@ namespace EFCorePr.Validations
             RuleFor(u => u.FirstName).NotEmpty().WithMessage("FirstName Can Not Be Empty!");
 
             RuleFor(u => u.LastName).NotEmpty().WithMessage("LastName Can Not Be Empty!");
+
+            RuleFor(u => u.Address).NotEmpty().WithMessage("Address Can Not Be Empty!");
         }
     }
 }
